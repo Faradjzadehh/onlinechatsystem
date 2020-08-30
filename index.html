@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        #chat {
+            height: 400px;
+            border: 1px solid #ccc;
+        }
+        #users {
+            height: 400px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5" id="app">
+        <div class="row" v-if = 'session == true'>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        Online Users
+                    </div>
+                    <div class="card-body" id="users">
+                        <ul class="list-group">
+                            <li class="list-group-item" v-for='user in users' :key="user.id">
+                                {{user.name}}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        Node JS , Socket IO and Vue JS Chat Site...
+                    </div>
+                
+                <div id="chat" class="card-body">
+                                    <ul>
+                                        <li v-for="message in messages" :key="message.id">
+                                            <div class="message" v-if="message.sender == username">
+                                                <b>Me:</b> {{message.message}}
+                                            </div>
+                                            <div class="message" v-else>
+                                                <b>{{message.sender}}:</b> {{message.message}}
+                                            </div>
+                                        </li>
+                                    </ul>
+                </div>
+                <form @submit.prevent="sendMessage()">
+                    <div class="input-group">
+                       <input type="text"  v-model="message" placeholder="Message" class="form-control">
+                       <div class="input-group-append">
+                           <button class="btn btn-primary">Send</button>
+                       </div> 
+                    </div>
+                </form>
+                
+            </div>
+        </div>
+        </div>
+        <div v-else >
+            <div class="col-md-6 offset-md-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="p-0 m-0 text-center">Log In</h3>
+                    </div>
+                    <div class="card-body">
+                        <form @submit.prevent="login()">
+                            <div class="form-group">
+                                <label>Username:</label>
+                                <input type="text" v-model="username" placeholder="Username" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <button class="btn btn-dark">Log In</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div> 
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+    <script>
+        const socket = io.connect();
+        new Vue({
+            el:"#app",
+            data: {
+                session:false,
+                username:'',
+                users:[],
+                message:'',
+                messages:[],
+            },
+            mounted:function(){
+                var obj = this;
+                socket.on("users",(users) => {
+                    obj.users = users;
+                });
+                socket.on("messagesServer",(messages) => {
+                    obj.messages = messages;
+                });
+            },
+            methods: {
+                sendMessage(){
+                    const message = this.message;
+                    const sender = this.username;
+                    var info = {
+                        id:Math.floor(Math.random() * 10132132332),
+                        sender:sender,
+                        message:message
+                    };
+                    socket.emit("sendMessageClient",info)
+                    this.message = '';
+                },
+                login(){
+                    if(!this.username){
+                        alert("Do not leave empty space")
+                    }else{
+                        this.session = true;
+                        socket.emit("newUser",this.username);
+                    }
+                }
+            }
+        }); 
+    </script>
+</body>
+</html>
